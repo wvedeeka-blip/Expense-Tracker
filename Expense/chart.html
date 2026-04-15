@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Chart 💗</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to bottom, #ffe4ec, #ffd1dc);
+      min-height: 100vh;
+      margin: 0;
+      text-align: center;
+    }
+
+    h2 {
+      margin-top: 20px;
+    }
+
+    .controls {
+      margin: 15px;
+    }
+
+    select {
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #ffb6c1;
+    }
+
+    .chart-box {
+      width: 90%;
+      max-width: 350px;
+      height: 360px;
+      margin: 20px auto 10px;
+      background: white;
+      border-radius: 12px;
+      padding: 10px;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+
+    #chart {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    /* 💥 MODERN CARD */
+    .expense-card {
+      width: 90%;
+      max-width: 350px;
+      margin: 15px auto;
+      padding: 18px;
+      border-radius: 16px;
+
+      background: rgba(255, 255, 255, 0.25);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+
+      border: 1px solid rgba(255, 255, 255, 0.4);
+
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      color: #5a3d5c;
+      font-weight: 600;
+      font-size: 16px;
+
+      transition: transform 0.2s ease;
+    }
+
+    .expense-card:hover {
+      transform: scale(1.03);
+    }
+
+    /* ✅ FIXED NUMBER COLOR */
+    .expense-card span {
+      font-size: 22px;
+      font-weight: bold;
+      color: black;
+    }
+
+    button {
+      margin: 15px;
+      padding: 10px 20px;
+      border: none;
+      background: #ff69b4;
+      color: white;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+
+<body>
+
+<h2>📊 Expense by Category</h2>
+
+<div class="controls">
+  <select id="monthFilter" onchange="drawChart()">
+    <option value="all">All Months</option>
+  </select>
+</div>
+
+<div class="chart-box">
+  <canvas id="chart"></canvas>
+</div>
+
+<!-- TOTAL EXPENSE CARD -->
+<div class="expense-card">
+  <div>Total Spending</div>
+  <div>₹ <span id="totalExpense">0</span></div>
+</div>
+
+<button onclick="goBack()">⬅ Back</button>
+
+<script>
+let data = JSON.parse(localStorage.getItem("transactions")) || [];
+let chart;
+
+const monthFilter = document.getElementById("monthFilter");
+
+function loadMonths() {
+  const months = new Set();
+
+  data.forEach(t => {
+    if (t.date) {
+      const d = new Date(t.date);
+      months.add(d.getFullYear() + "-" + (d.getMonth() + 1));
+    }
+  });
+
+  months.forEach(m => {
+    const [y, mo] = m.split("-");
+    const date = new Date(y, mo - 1);
+
+    const opt = document.createElement("option");
+    opt.value = m;
+    opt.textContent = date.toLocaleString("en-IN", {
+      month: "long",
+      year: "numeric"
+    });
+
+    monthFilter.appendChild(opt);
+  });
+}
+
+function drawChart() {
+  const selectedMonth = monthFilter.value;
+
+  let categoryTotals = {};
+  let totalExpense = 0;
+
+  data.forEach(t => {
+    if (t.type !== "expense") return;
+
+    const d = new Date(t.date);
+
+    if (selectedMonth !== "all") {
+      const key = d.getFullYear() + "-" + (d.getMonth() + 1);
+      if (key !== selectedMonth) return;
+    }
+
+    categoryTotals[t.category] =
+      (categoryTotals[t.category] || 0) + t.amount;
+
+    totalExpense += t.amount;
+  });
+
+  document.getElementById("totalExpense").innerText = totalExpense;
+
+  if (chart) chart.destroy();
+
+  chart = new Chart(document.getElementById("chart"), {
+    type: "doughnut",
+    data: {
+      labels: Object.keys(categoryTotals),
+      datasets: [{
+        data: Object.values(categoryTotals),
+        backgroundColor: [
+          "#ff85a2",
+          "#ff4d6d",
+          "#f9bec7",
+          "#ffc2d1",
+          "#ff99ac",
+          "#ff758f"
+        ]
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: "bottom" }
+      }
+    }
+  });
+}
+
+function goBack() {
+  window.location.href = "index.html";
+}
+
+loadMonths();
+drawChart();
+</script>
+
+</body>
+</html>
